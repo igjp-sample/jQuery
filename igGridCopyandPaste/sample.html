@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+
+	<!-- Ignite UI for jQuery Required Combined CSS Files -->
+	<link href="http://cdn-na.infragistics.com/igniteui/2022.1/latest/css/themes/infragistics/infragistics.theme.css" rel="stylesheet" />
+	<link href="http://cdn-na.infragistics.com/igniteui/2022.1/latest/css/structure/infragistics.css" rel="stylesheet" />
+
+	<script src="http://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.8.3.js"></script>
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+
+	<!-- Ignite UI for jQuery Required Combined JavaScript Files -->
+	<script src="http://cdn-na.infragistics.com/igniteui/2022.1/latest/js/infragistics.core.js"></script>
+	<script src="http://cdn-na.infragistics.com/igniteui/2022.1/latest/js/infragistics.lob.js"></script>
+</head>
+<body>
+
+	<fieldset class="explorer">
+		<table id="grid"></table>
+	</fieldset>
+
+		<script>
+
+			$(function () {
+
+				var grid = $("#grid");
+
+                //JSONデータ取得
+                $.ajax({
+                    type: "get",
+                    url: "https://excel2json.io/api/share/e5e5a4cc-1386-4958-0480-08daa4a8d995",
+                    datatype: "json",
+                    success: function (res) {
+                        //処理成功時
+                        $("#grid").igGrid({
+                            width: "100%",
+                            autoGenerateColumns: false,
+                            autoCommit : true,
+                            dataSource: res,
+                            primaryKey: "製伝No",
+                            dataSourceType: "json",
+                            defaultColumnWidth : "*",
+                            columns: [
+                                { key : "営業コメント", dataType: "string" },
+                                { key : "コメント", dataType: "string" },
+                                { key : "ステータス", dataType: "string" },
+                                { key : "製伝No", dataType: "string" },
+                                { key : "取引先", dataType: "string" },
+                                { key : "本", dataType: "string" },
+                                { key : "客先品名", dataType: "string" },
+                                { key : "受注数", dataType: "string" },
+                                { key : "注残", dataType: "string" },
+                                { key : "製造残", dataType: "string" },
+                                { key : "指定納期", dataType: "string" },
+                                { key : "約束納期", dataType: "string" },
+                                { key : "客先納期", dataType: "string" },
+                                { key : "製回納期", dataType: "string" },
+                                { key : "加工部門", dataType: "string" },
+                                { key : "営業所", dataType: "string" },
+                                { key : "営業組織", dataType: "string" },
+                                { key : "担当者", dataType: "string" },
+                                { key : "図番", dataType: "string" },
+                                { key : "注番", dataType: "string" },
+                                { key : "客先PN", dataType: "string" },
+                                { key : "製造単価", dataType: "string" },
+                                { key : "型代(製品単価内)", dataType: "string" },
+                                { key : "型代", dataType: "string" },
+                                { key : "型区", dataType: "string" },
+                                { key : "送付先", dataType: "string" },
+                                { key : "出区", dataType: "string" },
+                                { key : "備考1", dataType: "string" },
+                                { key : "備考2", dataType: "string" },
+                                { key : "営業用備考", dataType: "string" },
+                                { key : "材質", dataType: "string" },
+                                { key : "受注金額", dataType: "string" },
+                                { key : "受注残金額", dataType: "string" },
+                                { key : "品種コード1", dataType: "string" },
+                                { key : "品種コード2", dataType: "string" },
+                                { key : "客先コード", dataType: "string" },
+                                { key : "KCPN", dataType: "string" },
+                                { key : "KC品名", dataType: "string" },
+                                { key : "ロイヤリティーコード", dataType: "string" },
+                                { key : "用途コード", dataType: "string" },
+                                { key : "税コード", dataType: "string" },
+                                { key : "エンドユーザー", dataType: "string" },
+                                { key : "最小梱包数", dataType: "string" },
+                                { key : "現物交換数", dataType: "string" }
+                            ],
+                            features: [
+                                {
+                                    name: "Updating",
+                                    enableAddRow: false
+                                },
+                                {
+                                    name: "Selection",
+                                    mode: "cell",
+                                    multipleSelection : true
+                                },
+                            ]
+                        }).on('keydown', function (evnt) {
+                            //handle grid's keydown event
+                            var ctrl = evnt.ctrlKey, key = evnt.keyCode;
+                            if ((ctrl || evnt.metaKey) && key == 86 ) // Ctrl-V
+                            {
+                                navigator.clipboard.readText().then(
+                                    clipText => {
+                                        //process the clipboard data
+                                        var processedData = ProcessData(clipText);
+                                        UpdateRecords(processedData);
+                                    }
+                                );
+                            }
+                            if ((ctrl || evnt.metaKey) && key == 67 ) // Ctrl-C
+                            {
+                                var cells = $("#grid").igGridSelection("selectedCells");
+                                var copyText = '';
+                                if (cells.length == 0) {
+                                    return
+                                }
+                                var rowIdx = cells[0].rowIndex;
+                                var firstCell = true;
+                                // 選択セル数分ループ処理
+                                for (let i = 0; i < cells.length; i++)
+                                {
+                                    if (rowIdx != cells[i].rowIndex) {
+                                        copyText += "\n";
+                                        rowIdx = cells[i].rowIndex;
+                                        firstCell = true;
+                                    }
+                                    if (firstCell) {
+                                        firstCell = false;
+                                    } else {
+                                        copyText += "\t";
+                                    }
+                                    copyText += $("#grid").igGrid("getCellValue", cells[i].id, cells[i].columnKey);
+                                }
+                                copyTextToClipboard(copyText);
+                            }
+                        });
+                    },
+                    error: function (e) {
+                        debugger
+                        alert("error");
+                    }
+                });
+
+				grid.on("iggridupdatingrowdeleted", function (e, args) {
+                    console.log("commit");
+					grid.igGrid("commit");
+				});
+
+				grid.on("iggridupdatingeditrowended", function (e, args) {
+					if (args.update) {
+                        console.log("commit");
+					    grid.igGrid("commit");
+					}
+				});
+
+				function ProcessData(data) {
+					var pasteData = data.split("\n");
+					for (var i = 0; i < pasteData.length; i++) {
+						pasteData[i] = pasteData[i].split("\t");
+
+						// Check if last row is a dummy row
+						if (pasteData[pasteData.length - 1].length == 1 && pasteData[pasteData.length - 1][0] == "") {
+							pasteData.pop();
+						}
+						//remove empty data
+						if (pasteData.length == 1 && pasteData[0].length == 1 && (pasteData[0][0] == "" || pasteData[0][0] == "\r")) {
+							pasteData.pop();
+						}
+					}
+					return pasteData;
+				}
+
+                function copyTextToClipboard (text) {
+                    navigator.clipboard.writeText(text)
+                    .then(function() {
+                      console.log('Async: Copying to clipboard was successful!');
+                    }, function(err) {
+                      console.error('Async: Could not copy text: ', err);
+                    });
+                }
+
+				function UpdateRecords(processedData) {
+					//get active cell. Pasting will start from this cell as its top-right endpoint.
+					var cells = $("#grid").igGridSelection("selectedCells");
+					if (!cells || cells.length == 0) {
+					    alert("アクティブ セルがありません。貼り付けを開始するセルを選択してください。");
+						return;
+					}
+					cells[0].element.focus();
+
+					var cellIndex = cells[0].index;
+					var rowIndex = cells[0].rowIndex;
+
+					//Get visible columns
+					var columns = getVisibleColumns();
+
+					//Get Updating feature
+					var updating = grid.data("igGridUpdating");
+
+					var excessColsCount = cellIndex + processedData[0].length - columns.length;
+					showNotification(cells[0].row, excessColsCount);
+
+					//update grid records based on the processed clipboard data
+					for (var i = 0; i < processedData.length; i++) {
+						var gridRow = grid.igGrid("rowAt", rowIndex + i);
+						var curentDataRow = processedData[i];
+						var rowData = {};
+						for (var j = 0; j < columns.length - cellIndex; j++) {
+							var currentCell = curentDataRow[j];
+							var colKey = columns[j + cellIndex].key;
+							rowData[columns[j + cellIndex].key] = currentCell;
+						}
+						updating.updateRow($(gridRow).attr("data-id"), rowData);
+					}
+				}
+
+				function getVisibleColumns() {
+					var visibleCols = [];
+					var columns = grid.igGrid("option", "columns");
+					$(columns).each(function () {
+						if (this.hidden !== true) {
+							visibleCols.push(this);
+						}
+					});
+					return visibleCols;
+				}
+				function showNotification(rec, excessColsCount) {
+					if (!rec.data("igNotifier")) {
+						rec.igNotifier({
+							mode: "popover",
+							direction: "top",
+							showOn: "manual",
+							position: "start",
+							maxWidth: 50 / 100 * grid.width()
+						});
+					}
+
+					if (excessColsCount > 0) {
+						var warning = "グリッドに利用可能な列を超える列を貼り付けました。貼り付けたデータの最後の {count} 列は破棄されました。";
+						//PasteWarning
+						rec.igNotifier("notify", "warning", warning.replace("{count}", excessColsCount));
+					} else {
+						//SuccessfullyPasted
+						rec.igNotifier("notify", "success", "データをグリッドに正常に貼り付けました。");
+					}
+					setTimeout(function () {
+						rec.focus();
+						$(rec).on("blur", function () {
+							rec.igNotifier("hide");
+						});
+					}, 0);
+				}
+			});
+		</script>
+</body>
+</html>
